@@ -1,0 +1,5 @@
+ADD_EXECUTABLE(fetch_stream fetch_stream.cpp)
+ADD_EXECUTABLE(tracker_server tracker_server.cpp)
+
+TARGET_LINK_LIBRARIES(fetch_stream libtracker)
+TARGET_LINK_LIBRARIES(tracker_server libtracker)
