@@ -1,0 +1,3 @@
+ADD_EXECUTABLE(fetch_kinect fetch_kinect.cpp)
+
+TARGET_LINK_LIBRARIES(fetch_kinect libtracker)

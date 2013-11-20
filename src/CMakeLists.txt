@@ -23,3 +23,5 @@ SET( EXECUTABLE_OUTPUT_PATH
 
 SUBDIRS(tracker/lib)
 SUBDIRS(tracker/exe)
+SUBDIRS(tracker/server)
+SUBDIRS(tracker/kinect)

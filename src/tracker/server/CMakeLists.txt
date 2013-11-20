@@ -1,0 +1,3 @@
+ADD_EXECUTABLE(tracker_server tracker_server.cpp)
+
+TARGET_LINK_LIBRARIES(tracker_server libtracker)
