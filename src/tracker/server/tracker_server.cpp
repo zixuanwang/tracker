@@ -16,33 +16,24 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include "server.hpp"
+#include "tracker/lib/Camera.h"
 
-int main(int argc, char* argv[])
-{
-	//try
-	//{
-	//	// Check command line arguments.
-	//	if (argc != 5)
-	//	{
-	//		std::cerr << "Usage: http_server <address> <port> <threads> <doc_root>\n";
-	//		std::cerr << "  For IPv4, try:\n";
-	//		std::cerr << "    receiver 0.0.0.0 80 1 .\n";
-	//		std::cerr << "  For IPv6, try:\n";
-	//		std::cerr << "    receiver 0::0 80 1 .\n";
-	//		return 1;
-	//	}
+void exit_with_help() {
+	std::cout
+		<< "Usage: tracker_server\n";
+	exit(1);
+}
 
-	//	// Initialise the server.
-	//	std::size_t num_threads = boost::lexical_cast<std::size_t>(argv[3]);
-	//	http::server3::server s(argv[1], argv[2], argv[4], num_threads);
-
-	//	// Run the server until stopped.
-	//	s.run();
-	//}
-	//catch (std::exception& e)
-	//{
-	//	std::cerr << "exception: " << e.what() << "\n";
-	//}
+int main(int argc, char* argv[]){
+	if(argc == 1){
+		exit_with_help();
+	}
+	try{
+		http::server3::server s("0.0.0.0", "80", "/", 1);
+		s.run();
+	}catch(std::exception& e){
+		std::cerr << "Exception: " << e.what() << std::endl;
+	}
 	boost::property_tree::ptree pt;
 	boost::property_tree::ptree children;
 	boost::property_tree::ptree child1, child2, child3;

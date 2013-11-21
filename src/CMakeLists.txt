@@ -5,7 +5,7 @@ IF(MSVC)
         SET(CMAKE_CXX_FLAGS "/EHsc")
         ADD_DEFINITIONS( -DBOOST_ALL_NO_LIB )
 ENDIF(MSVC)
-find_package(Boost COMPONENTS filesystem system REQUIRED)
+find_package(Boost COMPONENTS filesystem system thread REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(CURL REQUIRED)
 
