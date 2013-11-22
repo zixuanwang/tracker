@@ -1,12 +1,17 @@
 #include "Room.h"
 
+std::string Room::CASCADE_FOLDER = "C:/Users/danwa/Dropbox/data/iroom/calibrate";
+Room* Room::s_instance = NULL;
 
-Room::Room(void){
+Room::Room() : m_count(0){
 	curl_global_init(CURL_GLOBAL_ALL);
 }
 
-
-Room::~Room(void){
+Room* Room::instance(){
+	if(s_instance == NULL){
+		s_instance = new Room();
+	}
+	return s_instance;
 }
 
 void Room::init(const std::string& config_path){
@@ -28,13 +33,19 @@ void Room::init(const std::string& config_path){
 	}
 }
 
-void Room::capture(const std::string& output_dir, int n){
+void Room::run(){
 	std::vector<std::shared_ptr<std::thread> > thread_ptr_array;
 	for(size_t i = 0; i < m_camera_array.size(); ++i){
 		thread_ptr_array.push_back(std::shared_ptr<std::thread>(new std::thread([&, i](){
-			std::string prefix = output_dir + "/" + m_camera_array[i]->get_ip_address();
-			m_camera_array[i]->capture(prefix + ".avi", prefix + ".timestamp", n);
+			std::shared_ptr<Processor> p(new Processor);
+			p->load_cascade_classifier(CASCADE_FOLDER + "/" + m_camera_array[i]->get_ip_address() + "/camera.xml");
+			m_camera_array[i]->set_processor(p);
+			m_camera_array[i]->capture();
 		})));
 	}
 	std::for_each(thread_ptr_array.begin(), thread_ptr_array.end(), [](std::shared_ptr<std::thread>& p){p->join();});
+}
+
+void Room::get_2d_position(std::vector<cv::Point2f>& position_vector){
+
 }

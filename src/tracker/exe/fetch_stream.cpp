@@ -19,8 +19,7 @@ int main(int argc, char* argv[]){
 			}
 		}
 	}
-	Room room;
-	room.init(config_path);
-	room.capture(output_dir, duration);
+	Room::instance()->init(config_path);
+	//room.capture(output_dir, duration);
 	return 0;
 }

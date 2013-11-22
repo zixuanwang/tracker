@@ -1,48 +1,58 @@
 #include "Camera.h"
-std::mutex Camera::s_av_mutex;
+
+Camera::Camera(const std::string& ip_address, const std::string& username, const std::string& password) : m_ip_address(ip_address), m_username(username), m_password(password), m_curl_handle(NULL), m_stop(true), m_buffer_queue(20){
+	std::string userpass = m_username + ":" + m_password;
+	m_curl_handle = curl_easy_init();
+	curl_easy_setopt(m_curl_handle, CURLOPT_USERPWD, userpass.c_str());
+}
 
 Camera::~Camera(void)
 {
 	curl_easy_cleanup(m_curl_handle);
 }
 
-void Camera::capture(const std::string& frame_path, const std::string& timestamp_path, int n){
-	m_frame_path = frame_path;
-	m_timestamp_path = timestamp_path;
+void Camera::capture(){
 	m_stop = false;
-	s_av_mutex.lock(); // make libav happy in multithreading.
-	m_video_writer.open(m_frame_path, CV_FOURCC('M','P','4','2'), 5, cv::Size(640, 480)); // output video format.
-	s_av_mutex.unlock();
-	m_timestamp_stream.open(m_timestamp_path);
-	if(m_video_writer.isOpened() && m_timestamp_stream.good()){
-		// create a thread for producer
-		std::thread producer([&]{
-			std::string url = "http://" + m_ip_address + "/nphMotionJpeg?Resolution=640x480&Quality=Clarity";
-			curl_easy_setopt(m_curl_handle, CURLOPT_NOSIGNAL, 1); // resolve longjmp error.
-			curl_easy_setopt(m_curl_handle, CURLOPT_URL, url.c_str());
-			curl_easy_setopt(m_curl_handle, CURLOPT_WRITEDATA, this);
-			curl_easy_setopt(m_curl_handle, CURLOPT_WRITEFUNCTION, invoke_frame_producer);
-			curl_easy_setopt(m_curl_handle, CURLOPT_TIMEOUT, n); // set timeout
-			curl_easy_perform(m_curl_handle);
-			// stop the consumer
-			m_stop = true;
-		});
-		// create a thread for consumer
-		std::thread consumer([&]{
-			while(!m_stop){
-				std::unique_lock<std::mutex> lock(m_queue_mutex);
-				m_condition_var.wait_for(lock, std::chrono::seconds(1), [&]{return !m_buffer_queue.empty();}); // guard against spurious wakeups
-				if(!m_buffer_queue.empty()){
-					cv::Mat image = m_buffer_queue.front();
-					save_frame(image);
-					m_buffer_queue.pop();
-				}
+	std::thread producer([&]{
+		std::string url = "http://" + m_ip_address + "/nphMotionJpeg?Resolution=640x480&Quality=Clarity";
+		curl_easy_setopt(m_curl_handle, CURLOPT_NOSIGNAL, 1); // resolve longjmp error.
+		curl_easy_setopt(m_curl_handle, CURLOPT_URL, url.c_str());
+		curl_easy_setopt(m_curl_handle, CURLOPT_WRITEDATA, this);
+		curl_easy_setopt(m_curl_handle, CURLOPT_WRITEFUNCTION, invoke_frame_producer);
+		curl_easy_setopt(m_curl_handle, CURLOPT_TIMEOUT, 0);
+		curl_easy_perform(m_curl_handle);
+		// stop the consumer
+		m_stop = true;
+	});
+	// create a thread for consumer
+	std::thread consumer([&]{
+		while(!m_stop){
+			std::unique_lock<std::mutex> lock(m_queue_mutex);
+			m_condition_var.wait_for(lock, std::chrono::seconds(1), [&]{return !m_buffer_queue.empty();}); // guard against spurious wakeups
+			if(!m_buffer_queue.empty()){
+				cv::Mat image = m_buffer_queue.front();
+				m_processor->process(image); // process the frame.
+				m_buffer_queue.pop_front();
 			}
-		});
-		producer.join();
-		consumer.join();
-		m_timestamp_stream.close();
-	}
+		}
+	});
+	producer.join();
+	consumer.join();
+}
+
+void Camera::get_2d_position(std::vector<cv::Point2f>& position_vector){
+	std::vector<cv::Point2f> image_position_vector;
+	m_processor->get_position(image_position_vector);
+
+}
+
+void Camera::load_calibration(const std::string& file_path){
+	cv::FileStorage f(file_path, cv::FileStorage::READ);
+	f["camera"] >> m_m;
+	f["dist"] >> m_dist;
+	f["r"] >> m_r;
+	f["t"] >> m_t;
+	f.release();
 }
 
 // producer wrapper
@@ -57,7 +67,7 @@ size_t Camera::frame_producer(void* ptr, size_t size, size_t nmemb){
 	cv::Mat image = generate_frame(c_ptr, len);
 	if(!image.empty()){
 		m_queue_mutex.lock();
-		m_buffer_queue.push(image);
+		m_buffer_queue.push_back(image);
 		m_queue_mutex.unlock();
 		m_condition_var.notify_one();
 	}	
@@ -100,16 +110,4 @@ cv::Mat Camera::generate_frame(unsigned char* c_ptr, size_t len){
 		}
 	}
 	return image;
-}
-
-Camera::Camera(const std::string& ip_address, const std::string& username, const std::string& password) : m_ip_address(ip_address), m_username(username), m_password(password), m_curl_handle(NULL), m_stop(true){
-	std::string userpass = m_username + ":" + m_password;
-	m_curl_handle = curl_easy_init();
-	curl_easy_setopt(m_curl_handle, CURLOPT_USERPWD, userpass.c_str());
-}
-
-void Camera::save_frame(const cv::Mat& image){
-	auto duration = std::chrono::high_resolution_clock::now().time_since_epoch();
-	m_timestamp_stream << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() << std::endl; // write current timestamp.
-	m_video_writer << image; // write image data.
 }

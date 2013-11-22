@@ -50,12 +50,20 @@ namespace http {
 				if (result)
 				{
 					request_handler_.handle_request(request_, reply_);
-					//boost::asio::async_write(socket_, reply_.to_buffers(),
-					//	strand_.wrap(
-					//	boost::bind(&connection::handle_write, shared_from_this(),
-					//	boost::asio::placeholders::error)));
-					boost::array<char, 6> a = { 'a', 'b', 'c', 'd', 'e' }; 
-					boost::asio::async_write(socket_, boost::asio::buffer(a),
+					std::vector<cv::Point2f> position_vector;
+					Room::instance()->get_2d_position(position_vector);
+					boost::property_tree::ptree pt;
+					boost::property_tree::ptree children;
+					for(auto& position : position_vector){
+						boost::property_tree::ptree child;
+						child.put("x", position.x);
+						child.put("y", position.y);
+						children.push_back(std::make_pair("", child));
+					}
+					pt.add_child("position", children);
+					std::stringstream ss;
+					boost::property_tree::json_parser::write_json(ss, pt);
+					boost::asio::async_write(socket_, boost::asio::buffer(ss.str()),
 						strand_.wrap(
 						boost::bind(&connection::handle_write, shared_from_this(),
 						boost::asio::placeholders::error)));

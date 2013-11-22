@@ -1,9 +1,8 @@
 SET(tracker_sources
 	Camera.h Camera.cpp
-	CascadeDetector.h CascadeDetector.cpp
-	Detector.h Detector.cpp
 	Math.h Math.cpp
 	ParticleFilter.h ParticleFilter.cpp
+	Processor.h Processor.cpp
 	Room.h Room.cpp
 )
 ADD_LIBRARY(libtracker ${tracker_sources})
