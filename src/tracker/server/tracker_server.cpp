@@ -27,16 +27,18 @@ int main(int argc, char* argv[]){
 		exit_with_help();
 	}
 	try{
-		std::thread room_thread([&]{
-			Room::instance()->init(argv[1]);
-			Room::instance()->run();
-		});
-		std::thread server_thread([&]{
-			http::server3::server s("0.0.0.0", "80", "/", 1);
-			s.run();
-		});
-		room_thread.join();
-		server_thread.join();
+		Room::instance()->init(argv[1]);
+		Room::instance()->run();
+		//std::thread room_thread([&]{
+		//	Room::instance()->init(argv[1]);
+		//	Room::instance()->run();
+		//});
+		//std::thread server_thread([&]{
+		//	http::server3::server s("0.0.0.0", "80", "/", 1);
+		//	s.run();
+		//});
+		//room_thread.join();
+		//server_thread.join();
 	}catch(std::exception& e){
 		std::cerr << "Exception: " << e.what() << std::endl;
 	}
