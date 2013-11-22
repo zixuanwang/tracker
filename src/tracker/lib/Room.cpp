@@ -47,5 +47,12 @@ void Room::run(){
 }
 
 void Room::get_2d_position(std::vector<cv::Point2f>& position_vector){
-
+	if(!position_vector.empty()){
+		position_vector.clear();
+	}
+	for(size_t i = 0; i < m_camera_array.size(); ++i){
+		std::vector<cv::Point2f> vector;
+		m_camera_array[i]->get_2d_position(vector);
+		std::copy(vector.begin(), vector.end(), std::back_inserter(position_vector));
+	}
 }

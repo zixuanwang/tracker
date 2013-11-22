@@ -43,7 +43,6 @@ void Camera::capture(){
 void Camera::get_2d_position(std::vector<cv::Point2f>& position_vector){
 	std::vector<cv::Point2f> image_position_vector;
 	m_processor->get_position(image_position_vector);
-
 }
 
 void Camera::load_calibration(const std::string& file_path){

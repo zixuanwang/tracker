@@ -1,5 +1,7 @@
 #pragma once
+#include <mutex>
 #include <opencv2/opencv.hpp>
+#include <thread>
 
 class Processor
 {
@@ -12,6 +14,7 @@ public:
 private:
 	cv::CascadeClassifier m_cascade_classifier;
 	std::vector<cv::Rect> m_box_vector;
+	std::mutex m_mutex;
 };
 
 

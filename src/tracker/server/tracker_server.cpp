@@ -18,7 +18,7 @@
 
 void exit_with_help() {
 	std::cout
-		<< "Usage: tracker_server\n";
+		<< "Usage: tracker_server config.dat\n";
 	exit(1);
 }
 
@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
 	}
 	try{
 		std::thread room_thread([&]{
-			Room::instance()->init("");
+			Room::instance()->init(argv[1]);
 			Room::instance()->run();
 		});
 		std::thread server_thread([&]{
