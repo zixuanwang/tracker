@@ -1,6 +1,6 @@
 #include "Room.h"
 
-std::string Room::CASCADE_FOLDER = "C:/Users/danwa/Dropbox/data/iroom/calibrate";
+std::string Room::CASCADE_FOLDER = "/home/zxwang/data";
 Room* Room::s_instance = NULL;
 
 Room::Room() : m_count(0){
@@ -38,7 +38,7 @@ void Room::run(){
 	for(size_t i = 0; i < m_camera_array.size(); ++i){
 		thread_ptr_array.push_back(std::shared_ptr<std::thread>(new std::thread([&, i](){
 			std::shared_ptr<Processor> p(new Processor);
-			p->load_cascade_classifier(CASCADE_FOLDER + "/" + m_camera_array[i]->get_ip_address() + "/camera.xml");
+			p->load_cascade_classifier(CASCADE_FOLDER + "/" + m_camera_array[i]->get_ip_address() + "/cascade.xml");
 			m_camera_array[i]->set_processor(p);
 			m_camera_array[i]->capture();
 		})));
